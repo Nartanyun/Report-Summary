@@ -3,3 +3,6 @@ pandas
 openai
 gunicorn
 requests
+openpyxl
+pdfplumber
+PyPDF2
