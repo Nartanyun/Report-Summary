@@ -32,7 +32,10 @@ def index():
                     data_str = df.head(20).to_string()
                 # Use Hugging Face summarization API with a different public model
                 api_url = "https://api-inference.huggingface.co/models/google/pegasus-xsum"
+                hf_token = os.environ.get("HUGGINGFACE_API_TOKEN")
                 headers = {"Accept": "application/json"}
+                if hf_token:
+                    headers["Authorization"] = f"Bearer {hf_token}"
                 payload = {"inputs": f"Summarize this report for business stakeholders: {data_str}"}
                 response = requests.post(api_url, headers=headers, json=payload)
                 if response.status_code == 200:
@@ -58,5 +61,6 @@ def download():
 
 if __name__ == '__main__':
     app.run(debug=True)
+
 
 
