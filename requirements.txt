@@ -2,3 +2,4 @@ flask
 pandas
 openai
 gunicorn
+requests
