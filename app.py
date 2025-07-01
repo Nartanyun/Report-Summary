@@ -24,8 +24,8 @@ def index():
                 else:
                     df = pd.read_excel(filepath)
                 data_str = df.head(20).to_string()
-                # Use Hugging Face summarization API
-                api_url = "https://api-inference.huggingface.co/models/facebook/bart-large-cnn"
+                # Use Hugging Face summarization API with a different public model
+                api_url = "https://api-inference.huggingface.co/models/google/pegasus-xsum"
                 headers = {"Accept": "application/json"}
                 payload = {"inputs": f"Summarize this report for business stakeholders: {data_str}"}
                 response = requests.post(api_url, headers=headers, json=payload)
