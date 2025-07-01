@@ -33,6 +33,10 @@ def index():
                     result = response.json()
                     if isinstance(result, list) and 'summary_text' in result[0]:
                         summary = result[0]['summary_text']
+                    elif isinstance(result, dict) and result.get("error"):
+                        summary = f"Hugging Face API error: {result['error']}"
+                    elif isinstance(result, dict) and result.get("estimated_time"):
+                        summary = "Model is loading on Hugging Face. Please wait a few seconds and try again."
                     else:
                         summary = str(result)
                 else:
@@ -48,3 +52,4 @@ def download():
 
 if __name__ == '__main__':
     app.run(debug=True)
+
