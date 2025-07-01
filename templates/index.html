@@ -19,9 +19,16 @@
         <h1>AI-Powered Report Summary</h1>
         <form method="post" enctype="multipart/form-data">
             <label for="file">Upload Excel or CSV file:</label><br>
-            <input type="file" name="file" id="file" accept=".csv,.xlsx,.xls" required>
-            <button type="submit">Summarize</button>
+            <input type="file" name="file" id="file" accept=".csv,.xlsx,.xls" required><br><br>
+            <label for="question">Ask a question about your data:</label><br>
+            <input type="text" name="question" id="question" value="{{ question or '' }}" placeholder="e.g. What was the total sales in the West region?" style="width:100%;"><br><br>
+            <button type="submit">Get Answer</button>
         </form>
+        {% if answer %}
+            <h2>Answer</h2>
+            <textarea readonly>{{ answer }}</textarea>
+            <br>
+        {% endif %}
         {% if summary %}
             <h2>Summary</h2>
             <textarea readonly>{{ summary }}</textarea>
