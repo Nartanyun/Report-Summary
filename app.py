@@ -41,8 +41,9 @@ def index():
                     headers = {"Accept": "application/json"}
                     if hf_token:
                         headers["Authorization"] = f"Bearer {hf_token}"
-                    # Convert DataFrame to records for Tapas
-                    table = df.head(20).to_dict(orient='records')
+                    # Convert all values to strings for Tapas
+                    df_str = df.head(20).astype(str)
+                    table = df_str.to_dict(orient='records')
                     payload = {"inputs": {"query": question, "table": table}}
                     response = requests.post(api_url, headers=headers, json=payload)
                     if response.status_code == 200:
@@ -66,6 +67,5 @@ def download():
 
 if __name__ == '__main__':
     app.run(debug=True)
-
 
 
