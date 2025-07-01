@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Report Summary</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 40px auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px #0001; padding: 2rem; }
+        h1 { text-align: center; }
+        form { margin-bottom: 2rem; }
+        textarea { width: 100%; min-height: 180px; margin-top: 1rem; }
+        .download-btn { display: inline-block; margin-top: 1rem; padding: 0.5rem 1.5rem; background: #007bff; color: #fff; border: none; border-radius: 4px; text-decoration: none; }
+        .download-btn:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>AI-Powered Report Summary</h1>
+        <form method="post" enctype="multipart/form-data">
+            <label for="file">Upload Excel or CSV file:</label><br>
+            <input type="file" name="file" id="file" accept=".csv,.xlsx,.xls" required>
+            <button type="submit">Summarize</button>
+        </form>
+        {% if summary %}
+            <h2>Summary</h2>
+            <textarea readonly>{{ summary }}</textarea>
+            <br>
+            <a class="download-btn" href="{{ url_for('download', summary=summary) }}">Download as .txt</a>
+        {% endif %}
+    </div>
+</body>
+</html>
