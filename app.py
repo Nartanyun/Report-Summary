@@ -36,7 +36,15 @@ def index():
                 headers = {"Accept": "application/json"}
                 if hf_token:
                     headers["Authorization"] = f"Bearer {hf_token}"
-                payload = {"inputs": f"Summarize this report for business stakeholders: {data_str}"}
+                # Improved prompt for better plain-English, analytical summary
+                prompt = (
+                    "You are an expert business analyst. "
+                    "Given the following sales data, explain in plain English what the report contains, "
+                    "describe the key columns, highlight any trends or patterns, and draw any possible conclusions. "
+                    "Be concise and clear for a non-technical audience.\n\n"
+                    f"{data_str}"
+                )
+                payload = {"inputs": prompt}
                 response = requests.post(api_url, headers=headers, json=payload)
                 if response.status_code == 200:
                     result = response.json()
