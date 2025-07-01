@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, send_file
 import os
 import pandas as pd
 import requests
+import pdfplumber
 from io import BytesIO
 
 app = Flask(__name__)
@@ -21,9 +22,14 @@ def index():
             try:
                 if file.filename.endswith('.csv'):
                     df = pd.read_csv(filepath)
+                    data_str = df.head(20).to_string()
+                elif file.filename.endswith('.pdf'):
+                    with pdfplumber.open(filepath) as pdf:
+                        pages = [page.extract_text() for page in pdf.pages if page.extract_text()]
+                        data_str = '\n'.join(pages)[:3000] if pages else 'No extractable text found in PDF.'
                 else:
                     df = pd.read_excel(filepath)
-                data_str = df.head(20).to_string()
+                    data_str = df.head(20).to_string()
                 # Use Hugging Face summarization API with a different public model
                 api_url = "https://api-inference.huggingface.co/models/google/pegasus-xsum"
                 headers = {"Accept": "application/json"}
@@ -52,4 +58,5 @@ def download():
 
 if __name__ == '__main__':
     app.run(debug=True)
+
 
