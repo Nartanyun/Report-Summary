@@ -2,8 +2,9 @@ from flask import Flask, render_template, request, redirect, url_for, send_file
 import os
 import pandas as pd
 import requests
-import pdfplumber
 from io import BytesIO
+import pdfplumber
+import json
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
@@ -11,10 +12,13 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
+    answer = None
     summary = None
     filename = None
+    question = None
     if request.method == 'POST':
         file = request.files['file']
+        question = request.form.get('question', '').strip()
         if file:
             filepath = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
             file.save(filepath)
@@ -22,45 +26,38 @@ def index():
             try:
                 if file.filename.endswith('.csv'):
                     df = pd.read_csv(filepath)
-                    data_str = df.head(20).to_string()
                 elif file.filename.endswith('.pdf'):
                     with pdfplumber.open(filepath) as pdf:
                         pages = [page.extract_text() for page in pdf.pages if page.extract_text()]
-                        data_str = '\n'.join(pages)[:3000] if pages else 'No extractable text found in PDF.'
+                        # For Tapas, we need a DataFrame, so PDF is not supported for Q&A
+                        summary = 'PDF Q&A not supported. Please upload CSV or Excel.'
+                        return render_template('index.html', summary=summary, answer=answer, filename=filename, question=question)
                 else:
                     df = pd.read_excel(filepath)
-                    data_str = df.head(20).to_string()
-                # Use Hugging Face summarization API with a different public model
-                api_url = "https://api-inference.huggingface.co/models/google/pegasus-xsum"
-                hf_token = os.environ.get("HUGGINGFACE_API_TOKEN")
-                headers = {"Accept": "application/json"}
-                if hf_token:
-                    headers["Authorization"] = f"Bearer {hf_token}"
-                # Improved prompt for better plain-English, analytical summary
-                prompt = (
-                    "You are an expert business analyst. "
-                    "Given the following sales data, explain in plain English what the report contains, "
-                    "describe the key columns, highlight any trends or patterns, and draw any possible conclusions. "
-                    "Be concise and clear for a non-technical audience.\n\n"
-                    f"{data_str}"
-                )
-                payload = {"inputs": prompt}
-                response = requests.post(api_url, headers=headers, json=payload)
-                if response.status_code == 200:
-                    result = response.json()
-                    if isinstance(result, list) and 'summary_text' in result[0]:
-                        summary = result[0]['summary_text']
-                    elif isinstance(result, dict) and result.get("error"):
-                        summary = f"Hugging Face API error: {result['error']}"
-                    elif isinstance(result, dict) and result.get("estimated_time"):
-                        summary = "Model is loading on Hugging Face. Please wait a few seconds and try again."
+                if question:
+                    # Prepare Tapas API call
+                    api_url = "https://api-inference.huggingface.co/models/google/tapas-large-finetuned-wtq"
+                    hf_token = os.environ.get("HUGGINGFACE_API_TOKEN")
+                    headers = {"Accept": "application/json"}
+                    if hf_token:
+                        headers["Authorization"] = f"Bearer {hf_token}"
+                    # Convert DataFrame to records for Tapas
+                    table = df.head(20).to_dict(orient='records')
+                    payload = {"inputs": {"query": question, "table": table}}
+                    response = requests.post(api_url, headers=headers, json=payload)
+                    if response.status_code == 200:
+                        result = response.json()
+                        if isinstance(result, dict) and 'answer' in result:
+                            answer = result['answer']
+                        else:
+                            answer = str(result)
                     else:
-                        summary = str(result)
+                        answer = f"Hugging Face API error: {response.text}"
                 else:
-                    summary = f"Hugging Face API error: {response.text}"
+                    summary = "Please enter a question for table Q&A."
             except Exception as e:
                 summary = f"Error processing file: {e}"
-    return render_template('index.html', summary=summary, filename=filename)
+    return render_template('index.html', summary=summary, answer=answer, filename=filename, question=question)
 
 @app.route('/download')
 def download():
